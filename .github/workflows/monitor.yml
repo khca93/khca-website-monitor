@@ -1,18 +1,59 @@
 
-name: KHCA Website Monitor
+name: KHCA Browser Visit
 
 on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  check-website:
+  browser-visit:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
     steps:
-      - name: Check KHCA website
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright
         run: |
-          curl -L -sS -o /dev/null \
-            -w "HTTP: %{http_code} | Time: %{time_total}s\n" \
-            --max-time 60 \
-            https://exampaper.khca.info/
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Browse SSC papers page
+        run: |
+          python - <<'PY'
+          import time
+          from playwright.sync_api import sync_playwright
+
+          url = "https://exampaper.khca.info/exam_papers.html?category=10th%20SSC"
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page()
+              page.goto(url, wait_until="domcontentloaded", timeout=60000)
+              page.wait_for_timeout(5000)
+
+              end_time = time.time() + 150
+              while time.time() < end_time:
+                  page.mouse.wheel(0, 500)
+                  page.wait_for_timeout(4000)
+
+                  links = page.locator("a[href]").all()
+                  if links:
+                      link = links[int(time.time()) % len(links)]
+                      try:
+                          href = link.get_attribute("href")
+                          if href and href.startswith("http"):
+                              print("Found link:", href)
+                      except Exception:
+                          pass
+
+              print("Browser visit completed")
+              browser.close()
+          PY
