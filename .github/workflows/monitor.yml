@@ -20,4 +20,4 @@ jobs:
           node-version: 20
       - run: npm install playwright
       - run: npx playwright install --with-deps chromium
-      - run: node surf.js
+      - run: node .github/workflows/surf.js
