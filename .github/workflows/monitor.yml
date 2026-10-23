@@ -1,14 +1,14 @@
 name: KHCA Website Surf
- 
+
 on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
- 
+
 concurrency:
   group: khca-surf
   cancel-in-progress: false
- 
+
 jobs:
   surf:
     runs-on: ubuntu-latest
